@@ -1,0 +1,21 @@
+{
+  "name": "snipebot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "snipe.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.26.0",
+    "basic-auth": "^2.0.1",
+    "basic-request": "^3.0.4",
+    "dotenv": "^16.0.0",
+    "ethers": "^5.5.4",
+    "node-fetch": "^3.2.0",
+    "web3": "^1.7.0"
+  }
+}
