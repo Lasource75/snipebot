@@ -1,24 +1,37 @@
 //import Web3 from 'web3';
-import fs from 'fs'
-import Web3 from '../web3.js'
+import fs from "fs";
+import Web3 from "../web3.js";
 
 const web3 = Web3.web3;
 const axios = Web3.axios;
 
 async function checkNotRug(data) {
-    const body = await axios.get('https://api.snowtrace.io/api?module=contract&action=getabi&address=' + data + '&apikey=' + process.env.API_KEY);
+    const body = await axios.get(
+        "https://api.snowtrace.io/api?module=contract&action=getabi&address=" +
+            data +
+            "&apikey=" +
+            process.env.API_KEY
+    );
     return body.data;
 }
 
 const methodsId = {
     "0x38ed1739": "swapExactTokensForTokens",
-}
+};
 
 let date;
 
 function getCurrentTime() {
     date = new Date();
-    return "[" + date.getHours().toString() + ":" + date.getMinutes().toString() + ":" + date.getSeconds().toString() + "]";
+    return (
+        "[" +
+        date.getHours().toString() +
+        ":" +
+        date.getMinutes().toString() +
+        ":" +
+        date.getSeconds().toString() +
+        "]"
+    );
 }
 
 let blockNumber;
@@ -32,33 +45,57 @@ let contractAddress = "";
 
 function contractCreated(transactionWithContractAddress) {
     // Permet de recuperer l'adresse du smart contract, que je mets ensuite en lowerCase car : https://community.metamask.io/t/address-correct-but-all-cap-letters-were-changed-to-lower-case/1521
-    contractAddress = transactionWithContractAddress.contractAddress.toLowerCase();
+    contractAddress =
+        transactionWithContractAddress.contractAddress.toLowerCase();
 
-    console.log("Contract creation = https://snowtrace.io/address/" + contractAddress + "\n");
+    console.log(
+        "Contract creation = https://snowtrace.io/address/" +
+            contractAddress +
+            "\n"
+    );
 
     checkNotRug(contractAddress).then((jsonResponse) => {
-        if (jsonResponse.status == '1') { // Le contract est vérifié
-            fs.appendFile("./logs/contracts_created.txt", "Contract creation:https://snowtrace.io/address/" + contractAddress + " : Verified at " + getCurrentTime() + "\n", (err) => {
-                if (err) {
-                    console.log("could not write to ./logs/contracts_created.txt")
+        if (jsonResponse.status == "1") {
+            // Le contract est vérifié
+            fs.appendFile(
+                "./logs/contracts_created.txt",
+                "Contract creation:https://snowtrace.io/address/" +
+                    contractAddress +
+                    " : Verified at " +
+                    getCurrentTime() +
+                    "\n",
+                (err) => {
+                    if (err) {
+                        console.log(
+                            "could not write to ./logs/contracts_created.txt"
+                        );
+                    }
                 }
-            })
+            );
         } else {
-            fs.appendFile("./logs/contracts_created.txt", "Contract creation:https://snowtrace.io/address/" + contractAddress + " : Not verified  " + getCurrentTime() + "\n", (err) => {
-                if (err) {
-                    console.log("could not write to ./logs/contracts_created.txt")
+            fs.appendFile(
+                "./logs/contracts_created.txt",
+                "Contract creation:https://snowtrace.io/address/" +
+                    contractAddress +
+                    " : Not verified  " +
+                    getCurrentTime() +
+                    "\n",
+                (err) => {
+                    if (err) {
+                        console.log(
+                            "could not write to ./logs/contracts_created.txt"
+                        );
+                    }
                 }
-            })
+            );
             //console.log("get request returned " + jsonResponse['status'])
         }
-    })
+    });
 }
 
-var subscription = web3.eth.subscribe("newBlockHeaders", (err, succ) => {
-
-}).on("data",
-    (block) => {
-
+var subscription = web3.eth
+    .subscribe("newBlockHeaders", (err, succ) => {})
+    .on("data", (block) => {
         blockNumber = block.number;
         getBlock(blockNumber).then((block) => {
             // console.log("\t\t\tBlock number : " + block.number);
@@ -74,7 +111,7 @@ var subscription = web3.eth.subscribe("newBlockHeaders", (err, succ) => {
             console.log("\tTransaction to : " + transactionsArray[0].to);
             */
 
-            transactionsArray.forEach(transaction => {
+            transactionsArray.forEach((transaction) => {
                 methodId = transaction.input.substring(0, 10);
                 contractAddress = transaction.input.substring(34, 74);
                 switch (methodId) {
@@ -92,40 +129,63 @@ var subscription = web3.eth.subscribe("newBlockHeaders", (err, succ) => {
                         break;
                     */
                     case "0x60806040": // marche aussi 0x6c01431e
-                        web3.eth.getTransactionReceipt(transaction.hash).then(
-                            (transactionWithContractAddress) => {
+                        web3.eth
+                            .getTransactionReceipt(transaction.hash)
+                            .then((transactionWithContractAddress) => {
                                 contractCreated(transactionWithContractAddress);
-                            }
-                        )
+                            });
                         break;
 
                     case "0x6c01431e": // marche aussi 0x6c01431e
+                        console.log(
+                            getCurrentTime() +
+                                "\tblock number : " +
+                                block.number
+                        );
 
-                        console.log(getCurrentTime() + "\tblock number : " + block.number)
-
-                        web3.eth.getTransactionReceipt(transaction.hash).then((transactionWithContractAddress) => {
-                            contractCreated(transactionWithContractAddress);
-                        })
+                        web3.eth
+                            .getTransactionReceipt(transaction.hash)
+                            .then((transactionWithContractAddress) => {
+                                contractCreated(transactionWithContractAddress);
+                            });
 
                         break;
 
                     case "0x60a06040": // marche aussi 0x6c01431e
-                        console.log(getCurrentTime() + "\tblock number : " + block.number)
-                        web3.eth.getTransactionReceipt(transaction.hash).then((transactionWithContractAddress) => {
-                            contractCreated(transactionWithContractAddress);
-                        })
+                        console.log(
+                            getCurrentTime() +
+                                "\tblock number : " +
+                                block.number
+                        );
+                        web3.eth
+                            .getTransactionReceipt(transaction.hash)
+                            .then((transactionWithContractAddress) => {
+                                contractCreated(transactionWithContractAddress);
+                            });
                         break;
 
                     case "0x715018a6":
-
-                        console.log(getCurrentTime() + "\tBlock number : " + block.number)
+                        console.log(
+                            getCurrentTime() +
+                                "\tBlock number : " +
+                                block.number
+                        );
                         console.log("\tRenounceOwnerShip detected");
 
-                        fs.appendFile("ownership_renounced.txt", getCurrentTime() + " OwnerShipRenounced at block : " + block.number + "\n", (err) => {
-                            if (err) {
-                                console.log("could not write to ownership_renounced.txt")
+                        fs.appendFile(
+                            "ownership_renounced.txt",
+                            getCurrentTime() +
+                                " OwnerShipRenounced at block : " +
+                                block.number +
+                                "\n",
+                            (err) => {
+                                if (err) {
+                                    console.log(
+                                        "could not write to ownership_renounced.txt"
+                                    );
+                                }
                             }
-                        })
+                        );
 
                         break;
                     /*
@@ -151,7 +211,7 @@ var subscription = web3.eth.subscribe("newBlockHeaders", (err, succ) => {
                         break;
                 }
             });
-        })
+        });
         /*
         subscription.unsubscribe(
             (err, succ) => {
@@ -161,5 +221,4 @@ var subscription = web3.eth.subscribe("newBlockHeaders", (err, succ) => {
             });
  
             */
-    }
-);
+    });

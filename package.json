@@ -1,21 +1,31 @@
 {
-  "name": "snipebot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "snipe.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "axios": "^0.26.0",
-    "basic-auth": "^2.0.1",
-    "basic-request": "^3.0.4",
-    "dotenv": "^16.0.0",
-    "ethers": "^5.5.4",
-    "node-fetch": "^3.2.0",
-    "web3": "^1.7.0"
-  }
+    "name": "snipebot",
+    "version": "1.0.0",
+    "description": "",
+    "main": "snipe.js",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint .",
+        "prettier:check": "npx prettier --check .",
+        "prettier": "npx prettier --write .",
+        "prepare": "husky install"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^0.26.0",
+        "basic-auth": "^2.0.1",
+        "basic-request": "^3.0.4",
+        "dotenv": "^16.0.0",
+        "ethers": "^5.5.4",
+        "node-fetch": "^3.2.0",
+        "web3": "^1.7.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.11.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-prettier": "^4.0.0",
+        "husky": "^7.0.4",
+        "prettier": "2.5.1"
+    }
 }
