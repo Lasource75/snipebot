@@ -1,4 +1,5 @@
 import Web3 from "../web3.js";
+import appLogger from "../method/method.js";
 
 let contract;
 
@@ -6,6 +7,8 @@ const web3 = Web3.web3;
 const axios = Web3.axios;
 
 const AppTag = "DashboardScreen";
+
+appLogger(AppTag, "Value : ");
 
 async function checkNotRug(data) {
     const body = await axios.get(
@@ -16,7 +19,7 @@ async function checkNotRug(data) {
     );
     return body.data;
 }
-
+/*
 try {
     if (process.env.LISTEN_CONTRACT_ADDRESS == "") {
         throw "Please enter a value for LISTEN_CONTRACT_ADDRESS in the .env file";
@@ -30,13 +33,13 @@ try {
                 abiArray,
                 "0x9BFF351eaF8d116BcA2F936559D60b8A7B482E43"
             );
-            /*
+            
             contract.events.allEvents().on(
                 "data", (data) => {
                     console.log(data)
                 }
                 )
-                */
+                
             contract.events
                 .Transfer({
                     filter: {
@@ -66,3 +69,4 @@ try {
     console.error(e);
     process.exit();
 }
+*/

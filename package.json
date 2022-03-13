@@ -16,6 +16,7 @@
         "axios": "^0.26.0",
         "basic-auth": "^2.0.1",
         "basic-request": "^3.0.4",
+        "coingecko-api": "^1.0.10",
         "dotenv": "^16.0.0",
         "ethers": "^5.5.4",
         "node-fetch": "^3.2.0",

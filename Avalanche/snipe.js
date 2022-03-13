@@ -2,7 +2,7 @@ import Web3 from "../web3.js";
 
 const web3 = Web3.web3;
 const axios = Web3.axios;
-const fs = Web3.fs;
+// const fs = Web3.fs;
 
 /**
  * @Dev : All useful addresses have to be here for more clarity.
@@ -24,6 +24,13 @@ const ABI_PANGOLIN_FACTORY = Web3.ABI_PANGOLIN_FACTORY;
 
 let contract = Web3.TRADER_JOE_ROUTER_CONTRACT;
 
+const joe_contract_factory = new web3.eth.Contract(
+    ABI_TRADER_JOE_FACTORY,
+    TRADER_JOE_FACTORY_ADDRESS
+);
+
+// console.log(joe_contract_factory);
+
 const account = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
 
 const block = await web3.eth.getBlock("latest");
@@ -31,10 +38,23 @@ let gas_limit = block.gasLimit / block.transactions.length;
 
 const TOKEN_TO_SNIPE = process.env.TOKEN_TO_SNIPE;
 const INPUT_TOKEN = process.env.INPUT_TOKEN;
+
 const AMOUNT = process.env.AMOUNT;
 const SLIPPAGE = process.env.SLIPPAGE;
 
-const TOKEN_PAIR = 0;
+let AVAX_PRICE = await Web3.getAvaxPrice();
+
+AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
+
+console.log(AVAX_PRICE);
+
+const TOKEN_PAIR = joe_contract_factory.methods
+    .getPair(
+        process.env.TOKEN_TO_SNIPE,
+        "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
+    )
+    .call({ from: account.address })
+    .then(console.log);
 
 const TOKEN_PRICE = 0;
 
@@ -44,7 +64,7 @@ const TOKEN_PRICE = 0;
  *****************************************************************
  ****************************************************************/
 
-buyTraderJoe(TOKEN_TO_SNIPE, AMOUNT);
+//buyTraderJoe(TOKEN_TO_SNIPE, AMOUNT);
 
 // approveTraderJoe(TOKEN_TO_SNIPE);
 
@@ -101,9 +121,10 @@ async function buyTraderJoe(addressToken, amount) {
             SwapTokenTxn,
             account.privateKey
         );
+        /*
         console.log("Signature txn : ");
         console.log(SignTxn);
-
+        */
         let SendTxn = await web3.eth.sendSignedTransaction(
             SignTxn.rawTransaction,
             handleData
@@ -121,7 +142,7 @@ async function approveTraderJoe(addressToken) {
     
         const parsed_abi = JSON.parse(abi.result)
     */
-    let contract = new web3.eth.Contract(abi_approve, addressToken);
+    contract = new web3.eth.Contract(abi_approve, addressToken);
     let amountMax =
         "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 

@@ -1,4 +1,4 @@
-export function appLogger(tag, message, ...object) {
+export default function appLogger(tag, message, ...object) {
     const DEBUG = process.env.NODE_ENV === "development";
     if (DEBUG) {
         // eslint-disable-next-line no-console
