@@ -2,17 +2,11 @@ import Web3 from "web3";
 import dotenv from "dotenv";
 import axios from "axios";
 import fs from "fs";
-<<<<<<< HEAD
 import CoinGecko from "coingecko-api";
 
 // Initialisation obligatoire ! Voir plus : https://www.npmjs.com/package/dotenv
 dotenv.config();
 const CoinGeckoClient = new CoinGecko();
-=======
-
-// Initialisation obligatoire ! Voir plus : https://www.npmjs.com/package/dotenv
-dotenv.config();
->>>>>>> d8c64a0 (chore: add prettier + eslint + apploger for better comprehension)
 
 // Option pour maintenir la connection au node si coupure il y a.
 const options = {
@@ -38,10 +32,7 @@ const options = {
 const web3 = new Web3(options);
 
 if (process.env.PROD == "true") {
-<<<<<<< HEAD
     console.log(process.env.PROD);
-=======
->>>>>>> d8c64a0 (chore: add prettier + eslint + apploger for better comprehension)
     web3.setProvider(new Web3.providers.WebsocketProvider(process.env.TESTNET));
     console.log("Currently on : Testnet \n");
 } else {
