@@ -1,5 +1,4 @@
 import Web3 from "../web3.js";
-import appLogger from "../method/method.js";
 
 let contract;
 
@@ -7,8 +6,6 @@ const web3 = Web3.web3;
 const axios = Web3.axios;
 
 const AppTag = "DashboardScreen";
-
-appLogger(AppTag, "Value : ");
 
 async function checkNotRug(data) {
     const body = await axios.get(

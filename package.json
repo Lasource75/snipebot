@@ -7,8 +7,12 @@
     "scripts": {
         "lint": "eslint .",
         "prettier:check": "npx prettier --check .",
+<<<<<<< HEAD
         "prettier": "npx prettier --write .",
         "prepare": "husky install"
+=======
+        "prettier": "npx prettier --write ."
+>>>>>>> d8c64a0 (chore: add prettier + eslint + apploger for better comprehension)
     },
     "author": "",
     "license": "ISC",
@@ -16,7 +20,10 @@
         "axios": "^0.26.0",
         "basic-auth": "^2.0.1",
         "basic-request": "^3.0.4",
+<<<<<<< HEAD
         "coingecko-api": "^1.0.10",
+=======
+>>>>>>> d8c64a0 (chore: add prettier + eslint + apploger for better comprehension)
         "dotenv": "^16.0.0",
         "ethers": "^5.5.4",
         "node-fetch": "^3.2.0",
@@ -26,7 +33,10 @@
         "eslint": "^8.11.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-prettier": "^4.0.0",
+<<<<<<< HEAD
         "husky": "^7.0.4",
+=======
+>>>>>>> d8c64a0 (chore: add prettier + eslint + apploger for better comprehension)
         "prettier": "2.5.1"
     }
 }
