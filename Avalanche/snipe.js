@@ -16,20 +16,16 @@ const PANGOLIN_FACTORY_ADDRESS = Web3.PANGOLIN_FACTORY_ADDRESS;
 /**
  * @Dev : Abi parsed
  */
-
 const ABI_TRADER_JOE_ROUTER = Web3.ABI_TRADER_JOE_ROUTER;
 const ABI_TRADER_JOE_FACTORY = Web3.ABI_TRADER_JOE_FACTORY;
 const ABI_PANGOLIN_ROUTER = Web3.ABI_PANGOLIN_ROUTER;
 const ABI_PANGOLIN_FACTORY = Web3.ABI_PANGOLIN_FACTORY;
 
+/**
+ * Contract are ready to use below
+ */
 let contract = Web3.TRADER_JOE_ROUTER_CONTRACT;
-
-const joe_contract_factory = new web3.eth.Contract(
-    ABI_TRADER_JOE_FACTORY,
-    TRADER_JOE_FACTORY_ADDRESS
-);
-
-// console.log(joe_contract_factory);
+const joe_contract_factory = Web3.TRADER_JOE_FACTORY_CONTRACT;
 
 const account = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
 
@@ -44,19 +40,64 @@ const SLIPPAGE = process.env.SLIPPAGE;
 
 let AVAX_PRICE = await Web3.getAvaxPrice();
 
+//Prix de l'avax
 AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
 
-console.log(AVAX_PRICE);
-
-const TOKEN_PAIR = joe_contract_factory.methods
+// Adresse de la paire, c'est un smart contract qui contient la liquidité
+const TOKEN_PAIR = await joe_contract_factory.methods
     .getPair(
         process.env.TOKEN_TO_SNIPE,
         "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
     )
     .call({ from: account.address })
-    .then(console.log);
+    .then((address) => {
+        return address;
+    });
 
-const TOKEN_PRICE = 0;
+const api_call_endpoint =
+    "https://api.snowtrace.io/api?module=contract&action=getabi&address=" +
+    TOKEN_PAIR +
+    "&apikey=" +
+    process.env.API_KEY;
+
+// On récupère simplement l'ABI via l'API snowtrace
+const tokenAbiNotParsed = await axios.get(api_call_endpoint);
+
+let token_abi;
+let token_contract;
+try {
+    // Parsing de l'abi qu'on à récuperé au préalable sur snowtrace via une requête API
+    token_abi = JSON.parse(tokenAbiNotParsed.data.result);
+
+    // Adresse du contract du token
+    token_contract = new web3.eth.Contract(token_abi, TOKEN_PAIR);
+} catch (e) {
+    console.error(
+        process.env.TOKEN_TO_SNIPE +
+            " is not listed on this DEX, the bot will cancel the transaction"
+    );
+    process.exit(-1);
+}
+
+// Les reserves sont en wei (10^18)
+const reserves = await token_contract.methods
+    .getReserves()
+    .call()
+    .then((reserves) => {
+        return reserves;
+    });
+
+// Calcul final du prix, il y a un bug ici, des fois il faut remplacer reserve0 par reserve et vice versa, je regarderai plus tard !
+// TODO: Reparer le bug du prix
+const token_price_finally =
+    (Number(web3.utils.fromWei(reserves._reserve0)) * Number(AVAX_PRICE)) /
+    Number(web3.utils.fromWei(reserves._reserve1));
+
+// console.log(Number(web3.utils.fromWei(reserves._reserve1)));
+
+console.log(
+    `price of : ${process.env.TOKEN_TO_SNIPE} is $${token_price_finally} per token`
+);
 
 /*****************************************************************
  *****************************************************************
