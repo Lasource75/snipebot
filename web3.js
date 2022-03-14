@@ -2,9 +2,11 @@ import Web3 from "web3";
 import dotenv from "dotenv";
 import axios from "axios";
 import fs from "fs";
+import CoinGecko from "coingecko-api";
 
 // Initialisation obligatoire ! Voir plus : https://www.npmjs.com/package/dotenv
 dotenv.config();
+const CoinGeckoClient = new CoinGecko();
 
 // Option pour maintenir la connection au node si coupure il y a.
 const options = {
@@ -30,6 +32,7 @@ const options = {
 const web3 = new Web3(options);
 
 if (process.env.PROD == "true") {
+    console.log(process.env.PROD);
     web3.setProvider(new Web3.providers.WebsocketProvider(process.env.TESTNET));
     console.log("Currently on : Testnet \n");
 } else {
@@ -109,6 +112,13 @@ const PANGOLIN_FACTORY_CONTRACT = new web3.eth.Contract(
     { from: account.address }
 );
 
+async function getAvaxPrice() {
+    return CoinGeckoClient.simple.price({
+        ids: ["avalanche-2"],
+        vs_currencies: ["usd"],
+    });
+}
+
 export default {
     web3,
     MIM,
@@ -130,4 +140,5 @@ export default {
     PANGOLIN_ROUTER_CONTRACT,
     PANGOLIN_FACTORY_CONTRACT,
     account,
+    getAvaxPrice,
 };
