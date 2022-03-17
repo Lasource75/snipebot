@@ -1,104 +1,100 @@
-import Web3 from "../web3.js";
+import utils from "../config/web3.js";
+import Web3 from "../config/node_connection.js";
+import contracts from "../Avalanche/preload_contracts.js";
 
 const web3 = Web3.web3;
-const axios = Web3.axios;
+const axios = contracts.axios;
 // const fs = Web3.fs;
 
-/**
- * @Dev : All useful addresses have to be here for more clarity.
- *
- */
-const TRADER_JOE_ROUTER_ADDRESS = Web3.TRADER_JOE_ROUTER_ADDRESS;
-const TRADER_JOE_FACTORY_ADDRESS = Web3.TRADER_JOE_FACTORY_ADDRESS;
-const PANGOLIN_ROUTER_ADDRESS = Web3.PANGOLIN_ROUTER_ADDRESS;
-const PANGOLIN_FACTORY_ADDRESS = Web3.PANGOLIN_FACTORY_ADDRESS;
+const TRADER_JOE_ROUTER_ADDRESS = "0x60aE616a2155Ee3d9A68541Ba4544862310933d4";
+const TRADER_JOE_FACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10";
 
-/**
- * @Dev : Abi parsed
- */
-const ABI_TRADER_JOE_ROUTER = Web3.ABI_TRADER_JOE_ROUTER;
-const ABI_TRADER_JOE_FACTORY = Web3.ABI_TRADER_JOE_FACTORY;
-const ABI_PANGOLIN_ROUTER = Web3.ABI_PANGOLIN_ROUTER;
-const ABI_PANGOLIN_FACTORY = Web3.ABI_PANGOLIN_FACTORY;
+const PANGOLIN_ROUTER_ADDRESS = "0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106";
+const PANGOLIN_FACTORY_ADDRESS = "0xefa94DE7a4656D787667C749f7E1223D71E9FD88";
 
-/**
- * Contract are ready to use below
- */
-let contract = Web3.TRADER_JOE_ROUTER_CONTRACT;
-const joe_contract_factory = Web3.TRADER_JOE_FACTORY_CONTRACT;
+const TRADER_JOE_ROUTER_CONTRACT = contracts.TRADER_JOE_ROUTER_CONTRACT;
+const TRADER_JOE_FACTORY_CONTRACT = contracts.TRADER_JOE_FACTORY_CONTRACT;
+const PANGOLIN_ROUTER_CONTRACT = contracts.PANGOLIN_ROUTER_CONTRACT;
+const PANGOLIN_FACTORY_CONTRACT = contracts.PANGOLIN_FACTORY_CONTRACT;
+const TOKEN_TO_SNIPE_CONTRACT = contracts.TOKEN_TO_SNIPE_CONTRACT;
+const TOKEN_TO_SNIPE_PAIR = contracts.TOKEN_TO_SNIPE_PAIR;
+const TOKEN_PAIR_CONTRACT = contracts.TOKEN_PAIR_CONTRACT;
+const MOST_USED_TOKEN_FOR_PAIR = contracts.MOST_USED_TOKEN_FOR_PAIR;
 
-const account = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
+const account = contracts.account;
 
 const block = await web3.eth.getBlock("latest");
 let gas_limit = block.gasLimit / block.transactions.length;
 
-const TOKEN_TO_SNIPE = process.env.TOKEN_TO_SNIPE;
-const INPUT_TOKEN = process.env.INPUT_TOKEN;
+const TOKEN_DECIMAL = await TOKEN_TO_SNIPE_CONTRACT.methods
+    .decimals()
+    .call()
+    .then((TOKEN_DECIMAL) => {
+        return TOKEN_DECIMAL;
+    });
 
-const AMOUNT = process.env.AMOUNT;
-const SLIPPAGE = process.env.SLIPPAGE;
+let AVAX_PRICE = await contracts.getAvaxPrice();
 
-let AVAX_PRICE = await Web3.getAvaxPrice();
+const getValueOfWei = utils.getValueOfWei;
 
 //Prix de l'avax
 AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
 
-// Adresse de la paire, c'est un smart contract qui contient la liquidité
-const TOKEN_PAIR = await joe_contract_factory.methods
-    .getPair(
-        process.env.TOKEN_TO_SNIPE,
-        "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
-    )
-    .call({ from: account.address })
-    .then((address) => {
-        return address;
-    });
-
-const api_call_endpoint =
-    "https://api.snowtrace.io/api?module=contract&action=getabi&address=" +
-    TOKEN_PAIR +
-    "&apikey=" +
-    process.env.API_KEY;
-
-// On récupère simplement l'ABI via l'API snowtrace
-const tokenAbiNotParsed = await axios.get(api_call_endpoint);
-
-let token_abi;
-let token_contract;
-try {
-    // Parsing de l'abi qu'on à récuperé au préalable sur snowtrace via une requête API
-    token_abi = JSON.parse(tokenAbiNotParsed.data.result);
-
-    // Adresse du contract du token
-    token_contract = new web3.eth.Contract(token_abi, TOKEN_PAIR);
-} catch (e) {
-    console.error(
-        process.env.TOKEN_TO_SNIPE +
-            " is not listed on this DEX, the bot will cancel the transaction"
-    );
-    process.exit(-1);
-}
-
 // Les reserves sont en wei (10^18)
-const reserves = await token_contract.methods
+const reserves = await TOKEN_PAIR_CONTRACT.methods
     .getReserves()
     .call()
     .then((reserves) => {
+        // console.log(reserves);
         return reserves;
     });
 
-// Calcul final du prix, il y a un bug ici, des fois il faut remplacer reserve0 par reserve et vice versa, je regarderai plus tard !
-// TODO: Reparer le bug du prix
-const token_price_finally =
-    (Number(web3.utils.fromWei(reserves._reserve0)) * Number(AVAX_PRICE)) /
-    Number(web3.utils.fromWei(reserves._reserve1));
+const reserve0 = await TOKEN_PAIR_CONTRACT.methods
+    .token0()
+    .call()
+    .then((reserve0) => {
+        return reserve0;
+    });
+
+const reserve1 = await TOKEN_PAIR_CONTRACT.methods
+    .token1()
+    .call()
+    .then((reserve1) => {
+        return reserve1;
+    });
+
+let TOKEN_PRICE;
+
+let i;
+
+for (i = 0; i < MOST_USED_TOKEN_FOR_PAIR.length; i++) {
+    if (MOST_USED_TOKEN_FOR_PAIR[i].address == reserve0) {
+        TOKEN_PRICE =
+            (getValueOfWei(
+                reserves._reserve0,
+                MOST_USED_TOKEN_FOR_PAIR[i].decimals
+            ) *
+                MOST_USED_TOKEN_FOR_PAIR[i].price) /
+            getValueOfWei(reserves._reserve1, TOKEN_DECIMAL);
+    } else if (MOST_USED_TOKEN_FOR_PAIR[i].address == reserve1) {
+        TOKEN_PRICE =
+            (getValueOfWei(
+                reserves._reserve1,
+                MOST_USED_TOKEN_FOR_PAIR[i].decimals
+            ) *
+                MOST_USED_TOKEN_FOR_PAIR[i].price) /
+            getValueOfWei(reserves._reserve0, TOKEN_DECIMAL);
+    }
+}
+
+console.log({ TOKEN_PRICE });
 
 // console.log(Number(web3.utils.fromWei(reserves._reserve1)));
-
+/*
 console.log(
     `price of : ${process.env.TOKEN_TO_SNIPE} is $${token_price_finally} per token`
 );
-
+*/
 /*****************************************************************
  *****************************************************************
  *********************** MAIN METHODS ****************************
@@ -111,6 +107,7 @@ console.log(
 
 // let request = require('basic-request');
 async function checkNotRug(address) {
+    console.log(process.env.TOKEN_TO_SNIPE);
     const body = await axios.get(
         "https://api.snowtrace.io/api?module=contract&action=getabi&address=" +
             address +
@@ -130,21 +127,31 @@ async function getContractAbi(address) {
     return body.data;
 }
 
+let amount = (TOKEN_PRICE * 1) / AVAX_PRICE + "";
+amount = amount.substring(0, 15);
+console.log(typeof amount);
+console.log({ amount });
+
+buyTraderJoe(process.env.TOKEN_TO_SNIPE, amount);
+
 async function buyTraderJoe(addressToken, amount) {
+    /*
     const isRug = await checkNotRug(addressToken);
     if (isRug.status == "1")
         throw "Potential rug detected, the order is canceled to avoid risks";
+        */
     try {
         const deadline_timestamp = Date.now() + 180000;
 
         let avaxToSwap = web3.utils.toWei(amount); // Conversion du montant en avax à acheter
 
-        var swapExactAVAXForTokens = contract.methods.swapExactAVAXForTokens(
-            web3.utils.toHex(1), // Montant minimum souhaité en sortie (lié au slippage)
-            [INPUT_TOKEN, addressToken],
-            account.address, // Adresse de notre wallet
-            deadline_timestamp //timestamp
-        );
+        var swapExactAVAXForTokens =
+            TRADER_JOE_ROUTER_CONTRACT.methods.swapExactAVAXForTokens(
+                web3.utils.toHex(1), // Montant minimum souhaité en sortie (lié au slippage)
+                [process.env.INPUT_TOKEN, addressToken],
+                account.address, // Adresse de notre wallet
+                deadline_timestamp //timestamp
+            );
 
         const swapTokenABI = await swapExactAVAXForTokens.encodeABI(); // Encodage des paramètre précédents.
 
@@ -183,11 +190,10 @@ async function approveTraderJoe(addressToken) {
     
         const parsed_abi = JSON.parse(abi.result)
     */
-    contract = new web3.eth.Contract(abi_approve, addressToken);
     let amountMax =
         "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
-    let approve = contract.methods.approve(
+    let approve = TRADER_JOE_ROUTER_CONTRACT.methods.approve(
         TRADER_JOE_ROUTER_ADDRESS,
         amountMax
     );
