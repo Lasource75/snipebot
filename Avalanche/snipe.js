@@ -33,12 +33,9 @@ const TOKEN_DECIMAL = await TOKEN_TO_SNIPE_CONTRACT.methods
         return TOKEN_DECIMAL;
     });
 
-let AVAX_PRICE = await contracts.getAvaxPrice();
+const PRICE_PAIR = contracts.PRICE_PAIR;
 
 const getValueOfWei = utils.getValueOfWei;
-
-//Prix de l'avax
-AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
 
 // Les reserves sont en wei (10^18)
 const reserves = await TOKEN_PAIR_CONTRACT.methods
@@ -127,9 +124,13 @@ async function getContractAbi(address) {
     return body.data;
 }
 
-let amount = (TOKEN_PRICE * 1) / AVAX_PRICE + "";
+// let amount = (TOKEN_PRICE * process.env.AMOUNT) / PRICE_PAIR + "";
+let amount = TOKEN_PRICE * (process.env.AMOUNT / PRICE_PAIR) + "";
+
+console.log("Amount in avax = : " + process.env.AMOUNT);
+
 amount = amount.substring(0, 15);
-console.log(typeof amount);
+
 console.log({ amount });
 
 buyTraderJoe(process.env.TOKEN_TO_SNIPE, amount);
@@ -142,13 +143,13 @@ async function buyTraderJoe(addressToken, amount) {
         */
     try {
         const deadline_timestamp = Date.now() + 180000;
-
-        let avaxToSwap = web3.utils.toWei(amount); // Conversion du montant en avax à acheter
-
+        console.log(typeof amount);
+        let avaxToSwap = web3.utils.toWei("0.0000000000001"); // Conversion du montant en avax à acheter
+        console.log("ARETTTTTTTTTTTTTTTTTTTE");
         var swapExactAVAXForTokens =
             TRADER_JOE_ROUTER_CONTRACT.methods.swapExactAVAXForTokens(
                 web3.utils.toHex(1), // Montant minimum souhaité en sortie (lié au slippage)
-                [process.env.INPUT_TOKEN, addressToken],
+                [process.env.INPUT_TOKEN, addressToken], // Si la LP n'est pas INPUT_TOKEN/addressToken, on aura une erreur type : Object.TransactionRevertedWithoutReasonError
                 account.address, // Adresse de notre wallet
                 deadline_timestamp //timestamp
             );

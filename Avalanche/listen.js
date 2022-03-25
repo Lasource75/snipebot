@@ -1,4 +1,6 @@
-import Web3 from "../web3.js";
+/* eslint-disable prettier/prettier */
+import Web3 from "../config/web3.js";
+import node_connection from "../config/node_connection.js";
 
 let contract;
 
@@ -16,7 +18,7 @@ async function checkNotRug(data) {
     );
     return body.data;
 }
-/*
+
 try {
     if (process.env.LISTEN_CONTRACT_ADDRESS == "") {
         throw "Please enter a value for LISTEN_CONTRACT_ADDRESS in the .env file";
@@ -28,35 +30,40 @@ try {
             const abiArray = JSON.parse(jsonResponse["result"]);
             contract = new web3.eth.Contract(
                 abiArray,
-                "0x9BFF351eaF8d116BcA2F936559D60b8A7B482E43"
+                process.env.LISTEN_CONTRACT_ADDRESS
             );
             
-            contract.events.allEvents().on(
-                "data", (data) => {
-                    console.log(data)
-                }
-                )
-                
+            contract.events.allEvents().on("data", (data) => {
+                console.log(data);
+            });
+
             contract.events
                 .Transfer({
                     filter: {
-                        from: "0x8f0bd8c329caec85d646abcd8f201a83c4eb63a0",
+                        from: "0xBB8F2271FA9dB1f514Ce0f072d82A5daC80313ad",
+                        to: "0xBB8F2271FA9dB1f514Ce0f072d82A5daC80313ad"
                     },
                 })
-                .on("data", async (event) => {
+                .on("data", (event) => {
                     //console.log("-------------------")
                     //console.log(event.returnValues)
+                    if(event.from == "0x539d67e4b630c2a3302f9b5769d36cf18500b345"){
+                        console.log("Bought of : " + web3.utils.fromWei(event.returnValues.value) + " tokens");
+                    } else if (event.to == "0x539d67e4b630c2a3302f9b5769d36cf18500b345"){
+                        console.log("Sell of : " + web3.utils.fromWei(event.returnValues.value) + " tokens");
+                    }
                     console.log(
                         "Value : " +
                             web3.utils.fromWei(event.returnValues.value)
                     );
-
+                        /*
                     console.log("-------------------");
                     appLogger(
                         AppTag,
                         "Value :",
                         web3.utils.fromWei(event.returnValues.value)
                     );
+                    */
                 });
         } else {
             console.log("get request returned " + jsonResponse["status"]);
@@ -66,4 +73,3 @@ try {
     console.error(e);
     process.exit();
 }
-*/
