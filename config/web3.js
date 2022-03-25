@@ -6,8 +6,6 @@ const web3 = Web3.web3;
 
 //Les cas à traiter sont les valeurs pour lesquels unit = 4,5,7,8,10,11,13,14,16 ou 17
 function getValueOfWei(value, unit) {
-    // 3,6,9,12,15,18
-    console.log({ value, unit });
     switch (unit) {
         case 3:
             return web3.utils.fromWei(value, "babbage");
@@ -24,7 +22,7 @@ function getValueOfWei(value, unit) {
         default:
             break;
     }
-    // Attention, peux poser des soucis avec une valeur assez grand.
+    // Attention, peux poser des soucis avec une valeur assez grande.
     return Number(Number(value) / Number(10 ** unit));
 }
 

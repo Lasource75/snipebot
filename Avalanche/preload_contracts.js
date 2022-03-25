@@ -14,6 +14,70 @@ const TRADER_JOE_FACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10";
 const PANGOLIN_ROUTER_ADDRESS = "0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106";
 const PANGOLIN_FACTORY_ADDRESS = "0xefa94DE7a4656D787667C749f7E1223D71E9FD88";
 
+const nullAddress = "0x0000000000000000000000000000000000000000";
+
+async function getAvaxPrice() {
+    return CoinGeckoClient.simple.price({
+        ids: ["avalanche-2"],
+        vs_currencies: ["usd"],
+    });
+}
+
+let AVAX_PRICE = await getAvaxPrice();
+
+//Prix de l'avax
+AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
+
+let JOE_PRICE = await CoinGeckoClient.simple
+    .price({
+        ids: ["joe"],
+        vs_currencies: ["usd"],
+    })
+    .then((JOE_PRICE) => {
+        return JOE_PRICE.data["joe"].usd;
+    });
+
+console.log({ JOE_PRICE });
+
+const MOST_USED_TOKEN_FOR_PAIR = [
+    {
+        address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+        symbol: "WAVAX",
+        decimals: 18,
+        price: AVAX_PRICE,
+    },
+    {
+        address: "0x130966628846BFd36ff31a822705796e8cb8C18D",
+        symbol: "MIM",
+        decimals: 18,
+        price: 1,
+    },
+    {
+        address: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
+        symbol: "USDC",
+        decimals: 6,
+        price: 1,
+    },
+    {
+        address: "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+        symbol: "USDC.e",
+        decimals: 6,
+        price: 1,
+    },
+    {
+        address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+        symbol: "JOE",
+        decimals: 18,
+        price: JOE_PRICE,
+    },
+    {
+        address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
+        symbol: "DAI.e",
+        decimals: 18,
+        price: 1,
+    },
+];
+
 // All json data will be writed to this this var
 let rawData;
 
@@ -74,15 +138,27 @@ const PANGOLIN_FACTORY_CONTRACT = new web3.eth.Contract(
 /***********************************************************************************************************************************/
 // Adresse de la paire, c'est le smart contract qui contient la liquidité
 
-const TOKEN_TO_SNIPE_PAIR = await TRADER_JOE_FACTORY_CONTRACT.methods
-    .getPair(
-        process.env.TOKEN_TO_SNIPE,
-        "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
-    )
-    .call()
-    .then((address) => {
-        return address;
-    });
+let TOKEN_TO_SNIPE_PAIR;
+let PRICE_PAIR;
+
+let i;
+
+for (i = 0; i < MOST_USED_TOKEN_FOR_PAIR.length; i++) {
+    TOKEN_TO_SNIPE_PAIR = await TRADER_JOE_FACTORY_CONTRACT.methods
+        .getPair(
+            process.env.TOKEN_TO_SNIPE,
+            MOST_USED_TOKEN_FOR_PAIR[i].address
+        )
+        .call()
+        .then((address) => {
+            // console.log({ address });
+            return address;
+        });
+    if (TOKEN_TO_SNIPE_PAIR !== "0x0000000000000000000000000000000000000000"){
+        PRICE_PAIR = MOST_USED_TOKEN_FOR_PAIR[i].price;
+        break;
+    }
+}
 
 const TOKEN_PAIR_ABI_URL =
     "https://api.snowtrace.io/api?module=contract&action=getabi&address=" +
@@ -121,51 +197,6 @@ const TOKEN_TO_SNIPE_CONTRACT = new web3.eth.Contract(
 
 /***********************************************************************************************************************************/
 
-async function getAvaxPrice() {
-    return CoinGeckoClient.simple.price({
-        ids: ["avalanche-2"],
-        vs_currencies: ["usd"],
-    });
-}
-
-let AVAX_PRICE = await getAvaxPrice();
-
-//Prix de l'avax
-AVAX_PRICE = AVAX_PRICE.data["avalanche-2"].usd;
-
-const MOST_USED_TOKEN_FOR_PAIR = [
-    {
-        address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-        symbol: "WAVAX",
-        decimals: 18,
-        price: AVAX_PRICE,
-    },
-    {
-        address: "0x130966628846BFd36ff31a822705796e8cb8C18D",
-        symbol: "MIM",
-        decimals: 18,
-        price: 1,
-    },
-    {
-        address: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
-        symbol: "USDC",
-        decimals: 6,
-        price: 1,
-    },
-    {
-        address: "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
-        symbol: "USDC.e",
-        decimals: 6,
-        price: 1,
-    },
-    {
-        address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
-        symbol: "DAI.e",
-        decimals: 18,
-        price: 1,
-    },
-];
-
 export default {
     TRADER_JOE_ROUTER_CONTRACT,
     TRADER_JOE_FACTORY_CONTRACT,
@@ -177,6 +208,5 @@ export default {
     MOST_USED_TOKEN_FOR_PAIR,
     web3,
     account,
-    AVAX_PRICE,
-    getAvaxPrice,
+    PRICE_PAIR,
 };
